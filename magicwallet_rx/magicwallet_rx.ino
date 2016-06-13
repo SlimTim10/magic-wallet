@@ -1,5 +1,6 @@
 #include <RH_ASK.h>
 #include "const.h"
+#include "lcd.h"
 
 #define DEBUG
 
