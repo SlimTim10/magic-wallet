@@ -8,23 +8,14 @@
 
 enum pins {
 	RECEIVE_PIN = 11,
-	LED1_PIN = 13,
 };
 
+enum { MAX_BILLS = 4 };
+
 RH_ASK radio(2000, RECEIVE_PIN, NULL);
-
-static void led1_on(void) {
-	digitalWrite(LED1_PIN, HIGH);
-}
-
-static void led1_off(void) {
-	digitalWrite(LED1_PIN, LOW);
-}
-
-static void led1_toggle(void) {
-	int x = digitalRead(LED1_PIN);
-	digitalWrite(LED1_PIN, !x);
-}
+uint8_t bills[MAX_BILLS];
+uint8_t bills_count;
+uint8_t prev_bill;
 
 void setup() {
 #	ifdef DEBUG
@@ -32,9 +23,16 @@ void setup() {
 	Serial.println("Initializing radio");
 #	endif
 
-	pinMode(LED1_PIN, OUTPUT);
+	lcd_init();
+	lcd_cursor_off();
+	lcd_clear();
+	lcd_printf("Ready");
 
-	led1_off();
+	for (uint8_t i = 0; i < MAX_BILLS; i++) {
+		bills[i] = 0;
+	}
+	bills_count = 0;
+	prev_bill = 0;
 
 	if (!radio.init()) {
 #		ifdef DEBUG
@@ -49,17 +47,22 @@ void loop() {
 	uint8_t buflen = sizeof(buf);
 
 	if (radio.recv(buf, &buflen)) {
+		uint8_t n = atoi((const char *) buf);
+		if (n != prev_bill) {
+			bills[bills_count] = n;
+			lcd_clear();
+			lcd_printf("%2d%2d%2d%2d", bills[0], bills[1], bills[2], bills[3]);
+			bills_count = (bills_count + 1) % MAX_BILLS;
+			prev_bill = n;
+		}
 #		ifdef DEBUG
 		radio.printBuffer("Received:", buf, buflen);
+		Serial.println("bills:");
+		Serial.println(bills[0]);
+		Serial.println(bills[1]);
+		Serial.println(bills[2]);
+		Serial.println(bills[3]);
+		Serial.println();
 #		endif
-		if (strncmp((const char *) buf, msg1, buflen)) {
-			led1_on();
-			delay(500);
-			led1_off();
-		} else if (strncmp((const char *) buf, msg2, buflen)) {
-			led1_on();
-			delay(500);
-			led1_off();
-		}
 	}
 }
