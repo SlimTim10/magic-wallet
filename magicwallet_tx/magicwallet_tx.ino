@@ -36,6 +36,8 @@ static uint8_t button2_pressed(void) {
 
 const char *str_bill_5 = "5";
 const char *str_bill_10 = "10";
+const char *str_bill_20 = "20";
+const char *str_bill_50 = "50";
 
 void setup() {
 #	ifdef DEBUG
