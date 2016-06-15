@@ -1,5 +1,4 @@
 #include <RH_ASK.h>
-#include "const.h"
 
 /* #define DEBUG */
 
@@ -12,7 +11,7 @@ enum pins {
 	BUTTON2_PIN = 8,
 };
 
-RH_ASK radio(2000, NULL, TRANSMIT_PIN);
+RH_ASK radio(1000, NULL, TRANSMIT_PIN);
 
 static void led1_on(void) {
 	digitalWrite(LED1_PIN, HIGH);
@@ -34,6 +33,9 @@ static uint8_t button1_pressed(void) {
 static uint8_t button2_pressed(void) {
 	return (digitalRead(BUTTON2_PIN) == LOW);
 }
+
+const char *str_bill_5 = "5";
+const char *str_bill_10 = "10";
 
 void setup() {
 #	ifdef DEBUG
@@ -58,16 +60,20 @@ void setup() {
 
 void loop() {
 	if (button1_pressed()) {
-		radio.send((uint8_t *) msg1, strlen(msg1));
-		radio.waitPacketSent();
+		for (uint8_t i = 0; i < 3; i++) {
+			radio.send((uint8_t *) str_bill_5, strlen(str_bill_5));
+			radio.waitPacketSent();
+		}
 		led1_on();
-		delay(500);
+		delay(200);
 		led1_off();
 	} else if (button2_pressed()) {
-		radio.send((uint8_t *) msg2, strlen(msg2));
-		radio.waitPacketSent();
+		for (uint8_t i = 0; i < 3; i++) {
+			radio.send((uint8_t *) str_bill_10, strlen(str_bill_10));
+			radio.waitPacketSent();
+		}
 		led1_on();
-		delay(500);
+		delay(200);
 		led1_off();
 	}
 }

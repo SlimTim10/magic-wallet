@@ -1,8 +1,7 @@
 #include <RH_ASK.h>
-#include "const.h"
 #include "lcd.h"
 
-#define DEBUG
+/* #define DEBUG */
 
 #define die()	while (1)
 
@@ -12,7 +11,7 @@ enum pins {
 
 enum { MAX_BILLS = 4 };
 
-RH_ASK radio(2000, RECEIVE_PIN, NULL);
+RH_ASK radio(1000, RECEIVE_PIN, NULL);
 uint8_t bills[MAX_BILLS];
 uint8_t bills_count;
 uint8_t prev_bill;
@@ -47,6 +46,7 @@ void loop() {
 	uint8_t buflen = sizeof(buf);
 
 	if (radio.recv(buf, &buflen)) {
+		buf[buflen] = '\0';
 		uint8_t n = atoi((const char *) buf);
 		if (n != prev_bill) {
 			bills[bills_count] = n;
