@@ -1,6 +1,6 @@
 #include <RH_ASK.h>
 
-#define DEBUG
+/* #define DEBUG */
 
 #define die()	while (1)
 
