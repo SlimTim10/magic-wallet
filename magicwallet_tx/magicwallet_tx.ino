@@ -1,41 +1,31 @@
 #include <RH_ASK.h>
 
-/* #define DEBUG */
+#define DEBUG
 
 #define die()	while (1)
 
 enum pins {
 	TRANSMIT_PIN = 12,
-	LED1_PIN = 13,
-	BUTTON1_PIN = 9,
-	BUTTON2_PIN = 8,
 };
 
 RH_ASK radio(1000, NULL, TRANSMIT_PIN);
 
-static void led1_on(void) {
-	digitalWrite(LED1_PIN, HIGH);
-}
+enum { MAX_BILLS = 4 };
 
-static void led1_off(void) {
-	digitalWrite(LED1_PIN, LOW);
-}
+struct bill {
+	uint8_t pin;
+	uint8_t done;
+	const char *msg;
+} bills[] = {
+	{6, 0, "20"},
+	{7, 0, "5"},
+	{8, 0, "10"},
+	{9, 0, "50"},
+};
 
-static void led1_toggle(void) {
-	uint8_t x = digitalRead(LED1_PIN);
-	digitalWrite(LED1_PIN, !x);
+static uint8_t button_pressed(uint8_t pin) {
+	return (digitalRead(pin) == LOW);
 }
-
-static uint8_t button1_pressed(void) {
-	return (digitalRead(BUTTON1_PIN) == LOW);
-}
-
-static uint8_t button2_pressed(void) {
-	return (digitalRead(BUTTON2_PIN) == LOW);
-}
-
-const char *str_bill_5 = "5";
-const char *str_bill_10 = "10";
 
 void setup() {
 #	ifdef DEBUG
@@ -43,37 +33,31 @@ void setup() {
 	Serial.println("Initializing radio");
 #	endif
 
-	pinMode(LED1_PIN, OUTPUT);
-	pinMode(BUTTON1_PIN, INPUT_PULLUP);
-	pinMode(BUTTON2_PIN, INPUT_PULLUP);
-
-	led1_off();
+	for (uint8_t i = 0; i < MAX_BILLS; i++) {
+		pinMode(bills[i].pin, INPUT_PULLUP);
+	}
 
 	if (!radio.init()) {
 #		ifdef DEBUG
 		Serial.println("Init failed");
 #		endif
-		led1_on();
 		die();
 	}
 }
 
 void loop() {
-	if (button1_pressed()) {
-		for (uint8_t i = 0; i < 3; i++) {
-			radio.send((uint8_t *) str_bill_5, strlen(str_bill_5));
-			radio.waitPacketSent();
+	for (uint8_t i = 0; i < MAX_BILLS; i++) {
+		if (!bills[i].done && button_pressed(bills[i].pin)) {
+			for (uint8_t j = 0; j < 3; j++) {
+				radio.send((uint8_t *) bills[i].msg, strlen(bills[i].msg));
+				radio.waitPacketSent();
+				delay(50);
+#			ifdef DEBUG
+				Serial.print("Sent: ");
+				Serial.println(bills[i].msg);
+#			endif
+			}
+			bills[i].done = 1;
 		}
-		led1_on();
-		delay(200);
-		led1_off();
-	} else if (button2_pressed()) {
-		for (uint8_t i = 0; i < 3; i++) {
-			radio.send((uint8_t *) str_bill_10, strlen(str_bill_10));
-			radio.waitPacketSent();
-		}
-		led1_on();
-		delay(200);
-		led1_off();
 	}
 }
