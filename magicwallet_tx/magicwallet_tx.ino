@@ -6,45 +6,25 @@
 
 enum pins {
 	TRANSMIT_PIN = 12,
-	BUTTON1_PIN = 6,
-	BUTTON2_PIN = 7,
-	BUTTON3_PIN = 8,
-	BUTTON4_PIN = 9,
 };
 
 RH_ASK radio(1000, NULL, TRANSMIT_PIN);
 
-static uint8_t button1_pressed(void) {
-	return (digitalRead(BUTTON1_PIN) == LOW);
+static uint8_t button_pressed(uint8_t pin) {
+	return (digitalRead(pin) == LOW);
 }
 
-static uint8_t button2_pressed(void) {
-	return (digitalRead(BUTTON2_PIN) == LOW);
-}
-
-static uint8_t button3_pressed(void) {
-	return (digitalRead(BUTTON3_PIN) == LOW);
-}
-
-static uint8_t button4_pressed(void) {
-	return (digitalRead(BUTTON4_PIN) == LOW);
-}
+enum { MAX_BILLS = 4 };
 
 struct bill {
+	uint8_t pin;
 	uint8_t done;
 	const char *msg;
-};
-
-struct {
-	bill b20;
-	bill b5;
-	bill b10;
-	bill b50;
-} bills = {
-	{0, "20"},
-	{0, "5"},
-	{0, "10"},
-	{0, "50"},
+} bills[] = {
+	{6, 0, "20"},
+	{7, 0, "5"},
+	{8, 0, "10"},
+	{9, 0, "50"},
 };
 
 void setup() {
@@ -53,10 +33,9 @@ void setup() {
 	Serial.println("Initializing radio");
 #	endif
 
-	pinMode(BUTTON1_PIN, INPUT_PULLUP);
-	pinMode(BUTTON2_PIN, INPUT_PULLUP);
-	pinMode(BUTTON3_PIN, INPUT_PULLUP);
-	pinMode(BUTTON4_PIN, INPUT_PULLUP);
+	for (uint8_t i = 0; i < MAX_BILLS; i++) {
+		pinMode(bills[i].pin, INPUT_PULLUP);
+	}
 
 	if (!radio.init()) {
 #		ifdef DEBUG
@@ -67,49 +46,18 @@ void setup() {
 }
 
 void loop() {
-	if (!bills.b20.done && button1_pressed()) {
-		for (uint8_t i = 0; i < 3; i++) {
-			radio.send((uint8_t *) bills.b20.msg, strlen(bills.b20.msg));
-			radio.waitPacketSent();
-			delay(50);
+	for (uint8_t i = 0; i < MAX_BILLS; i++) {
+		if (!bills[i].done && button_pressed(bills[i].pin)) {
+			for (uint8_t j = 0; j < 3; j++) {
+				radio.send((uint8_t *) bills[i].msg, strlen(bills[i].msg));
+				radio.waitPacketSent();
+				delay(50);
 #			ifdef DEBUG
-			Serial.print("Sent: ");
-			Serial.println(bills.b20.msg);
+				Serial.print("Sent: ");
+				Serial.println(bills[i].msg);
 #			endif
+			}
+			bills[i].done = 1;
 		}
-		bills.b20.done = 1;
-	} else if (!bills.b5.done && button2_pressed()) {
-		for (uint8_t i = 0; i < 3; i++) {
-			radio.send((uint8_t *) bills.b5.msg, strlen(bills.b5.msg));
-			radio.waitPacketSent();
-			delay(50);
-#			ifdef DEBUG
-			Serial.print("Sent: ");
-			Serial.println(bills.b5.msg);
-#			endif
-		}
-		bills.b5.done = 1;
-	} else if (!bills.b10.done && button3_pressed()) {
-		for (uint8_t i = 0; i < 3; i++) {
-			radio.send((uint8_t *) bills.b10.msg, strlen(bills.b10.msg));
-			radio.waitPacketSent();
-			delay(50);
-#			ifdef DEBUG
-			Serial.print("Sent: ");
-			Serial.println(bills.b10.msg);
-#			endif
-		}
-		bills.b10.done = 1;
-	} else if (!bills.b50.done && button4_pressed()) {
-		for (uint8_t i = 0; i < 3; i++) {
-			radio.send((uint8_t *) bills.b50.msg, strlen(bills.b50.msg));
-			radio.waitPacketSent();
-			delay(50);
-#			ifdef DEBUG
-			Serial.print("Sent: ");
-			Serial.println(bills.b50.msg);
-#			endif
-		}
-		bills.b50.done = 1;
 	}
 }
