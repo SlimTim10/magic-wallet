@@ -10,10 +10,6 @@ enum pins {
 
 RH_ASK radio(1000, NULL, TRANSMIT_PIN);
 
-static uint8_t button_pressed(uint8_t pin) {
-	return (digitalRead(pin) == LOW);
-}
-
 enum { MAX_BILLS = 4 };
 
 struct bill {
@@ -26,6 +22,10 @@ struct bill {
 	{8, 0, "10"},
 	{9, 0, "50"},
 };
+
+static uint8_t button_pressed(uint8_t pin) {
+	return (digitalRead(pin) == LOW);
+}
 
 void setup() {
 #	ifdef DEBUG
